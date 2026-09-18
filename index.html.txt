@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Quiz e Flashcards — Leisure time &amp; Entertainment (7º ano)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#f5f6f8;
+    --card:#ffffff;
+    --text:#222222;
+    --muted:#666666;
+    --border:#dddddd;
+    --accent:#1D2733;
+    --accent2:#378ADD;
+    --correct:#2E7D32;
+    --correct-bg:#E8F5E9;
+    --wrong:#C62828;
+    --wrong-bg:#FDECEA;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.5;
+  }
+  header{
+    background:var(--accent);
+    color:#fff;
+    padding:28px 20px;
+    text-align:center;
+  }
+  header h1{margin:0 0 6px;font-size:1.5rem;}
+  header p{margin:0;color:#cbd5dc;font-size:0.95rem;}
+  nav{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    background:#fff;
+    border-bottom:1px solid var(--border);
+    position:sticky;
+    top:0;
+    z-index:10;
+    padding:10px;
+  }
+  nav button{
+    padding:10px 20px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:#f0f0f0;
+    cursor:pointer;
+    font-size:0.95rem;
+    font-weight:600;
+  }
+  nav button.active{
+    background:var(--accent2);
+    color:#fff;
+    border-color:var(--accent2);
+  }
+  main{
+    max-width:820px;
+    margin:0 auto;
+    padding:24px 16px 60px;
+  }
+  section{display:none;}
+  section.active{display:block;}
+
+  /* ---- Quiz ---- */
+  .question-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:18px;
+  }
+  .question-tag{
+    display:inline-block;
+    font-size:0.75rem;
+    font-weight:700;
+    color:#0C447C;
+    background:#E6F1FB;
+    padding:3px 10px;
+    border-radius:6px;
+    margin-bottom:10px;
+  }
+  .question-text{font-weight:600;margin:0 0 14px;font-size:1.02rem;}
+  .options{display:flex;flex-direction:column;gap:8px;}
+  .option{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 12px;
+    cursor:pointer;
+    background:#fafafa;
+  }
+  .option:hover{background:#f0f4f8;}
+  .option input{margin:0;}
+  .option.correct{background:var(--correct-bg);border-color:var(--correct);}
+  .option.wrong{background:var(--wrong-bg);border-color:var(--wrong);}
+  .explanation{
+    margin-top:12px;
+    font-size:0.9rem;
+    color:var(--muted);
+    background:#f7f7f7;
+    border-left:3px solid var(--accent2);
+    padding:10px 12px;
+    border-radius:6px;
+    display:none;
+  }
+  .explanation.show{display:block;}
+
+  .quiz-actions{
+    display:flex;
+    justify-content:center;
+    gap:14px;
+    margin-top:20px;
+  }
+  .btn{
+    padding:12px 26px;
+    border:none;
+    border-radius:8px;
+    background:var(--accent2);
+    color:#fff;
+    font-weight:700;
+    font-size:1rem;
+    cursor:pointer;
+  }
+  .btn.secondary{
+    background:#fff;
+    color:var(--accent2);
+    border:1px solid var(--accent2);
+  }
+  #score-box{
+    display:none;
+    text-align:center;
+    background:#fff;
+    border:2px solid var(--accent2);
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:20px;
+    font-size:1.2rem;
+    font-weight:700;
+  }
+  #score-box.show{display:block;}
+  .error-msg{
+    color:var(--wrong);
+    font-size:0.85rem;
+    margin-top:8px;
+    display:none;
+  }
+  .error-msg.show{display:block;}
+
+  /* ---- Flashcards ---- */
+  .flash-controls{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
+  }
+  .flash-controls .counter{font-weight:600;color:var(--muted);}
+  .flashcard-wrap{
+    perspective:1200px;
+    height:280px;
+    margin-bottom:20px;
+  }
+  .flashcard{
+    position:relative;
+    width:100%;
+    height:100%;
+    transition:transform 0.5s;
+    transform-style:preserve-3d;
+    cursor:pointer;
+  }
+  .flashcard.flipped{transform:rotateY(180deg);}
+  .face{
+    position:absolute;
+    inset:0;
+    backface-visibility:hidden;
+    border-radius:14px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:26px;
+    border:1px solid var(--border);
+  }
+  .front{
+    background:#E6F1FB;
+    color:#0C447C;
+  }
+  .back{
+    background:#EAF3DE;
+    color:#27500A;
+    transform:rotateY(180deg);
+  }
+  .face .tag{
+    font-size:0.75rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    margin-bottom:14px;
+    opacity:0.75;
+  }
+  .face .content{font-size:1.15rem;font-weight:600;}
+  .face .hint{
+    margin-top:14px;
+    font-size:0.85rem;
+    font-weight:400;
+    opacity:0.75;
+  }
+  .flash-nav{
+    display:flex;
+    justify-content:center;
+    gap:14px;
+  }
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:0.8rem;
+    padding:20px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Língua Inglesa · 7º ano · 3º bimestre</h1>
+  <p>Leisure time &amp; Entertainment — Quiz e Flashcards (Aulas 1, 2, 3, 5, 6, 8, 9, 11, 12 e 13)</p>
+</header>
+
+<nav>
+  <button id="tab-quiz" class="active" onclick="showTab('quiz')">Quiz</button>
+  <button id="tab-flash" onclick="showTab('flash')">Flashcards</button>
+</nav>
+
+<main>
+
+  <!-- ================= QUIZ ================= -->
+  <section id="quiz" class="active">
+    <div id="score-box"></div>
+    <div id="quiz-container"></div>
+    <div class="quiz-actions">
+      <button class="btn" id="check-btn" onclick="checkQuiz()">Corrigir</button>
+      <button class="btn secondary" onclick="resetQuiz()">Refazer quiz</button>
+    </div>
+  </section>
+
+  <!-- ================= FLASHCARDS ================= -->
+  <section id="flash">
+    <div class="flash-controls">
+      <span class="counter" id="flash-counter">Card 1 de 10</span>
+      <span style="font-size:0.85rem;color:var(--muted);">Clique no card para virar</span>
+    </div>
+    <div class="flashcard-wrap">
+      <div class="flashcard" id="flashcard" onclick="flipCard()">
+        <div class="face front">
+          <div class="tag" id="front-tag">Aula 1</div>
+          <div class="content" id="front-content"></div>
+          <div class="hint">Clique para ver a resposta</div>
+        </div>
+        <div class="face back">
+          <div class="tag" id="back-tag">Resposta</div>
+          <div class="content" id="back-content"></div>
+        </div>
+      </div>
+    </div>
+    <div class="flash-nav">
+      <button class="btn secondary" onclick="prevCard()">← Anterior</button>
+      <button class="btn secondary" onclick="shuffleCards()">Embaralhar</button>
+      <button class="btn" onclick="nextCard()">Próximo →</button>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Produzido a partir dos slides das Aulas 1, 2, 3, 5, 6, 8, 9, 11, 12 e 13 — SEDUC-SP, 7º ano, Ensino Fundamental Anos Finais.
+</footer>
+
+<script>
+/* ---------------- DATA ---------------- */
+const quizData = [
+  {
+    tag: "Aula 1 — Leisure-time stories (P1)",
+    prompt: "Complete: 'Yesterday, I ______ to school.'",
+    options: ["walk", "walked", "walks", "walking"],
+    correct: 1,
+    explanation: "No simple past, verbos regulares recebem a terminação -ed. 'Walk' vira 'walked' para descrever uma ação finalizada no passado."
+  },
+  {
+    tag: "Aula 2 — Leisure-time stories (P2)",
+    prompt: "Qual sequence word normalmente é usada para indicar a ÚLTIMA etapa de uma sequência de eventos passados?",
+    options: ["First", "Then", "After that", "Finally"],
+    correct: 3,
+    explanation: "'Finally' é usado para marcar o último evento de uma sequência, enquanto 'first', 'then' e 'after that' indicam etapas anteriores."
+  },
+  {
+    tag: "Aula 3 — Then and now (P1)",
+    prompt: "Escolha a frase correta para falar sobre uma habilidade no passado:",
+    options: ["I can swim when I was young.", "I could swim when I was young.", "I swum when I was young.", "I am swimming when I was young."],
+    correct: 1,
+    explanation: "'Could' é a forma passada de 'can', usada para descrever habilidades que a pessoa tinha no passado."
+  },
+  {
+    tag: "Aula 5 — Then and now (P2)",
+    prompt: "Qual frase compara corretamente uma habilidade do passado com o presente?",
+    options: ["When I was younger, I can't draw, but now I could.", "When I was younger, I could draw, but now I can't.", "When I was younger, I could draw, but now I could.", "When I was younger, I can draw, but now I can't."],
+    correct: 1,
+    explanation: "Para comparar passado e presente, usamos 'could' (passado) e 'can/can't' (presente): 'I could draw, but now I can't.'"
+  },
+  {
+    tag: "Aula 6 — Childhood memories (P1)",
+    prompt: "Qual frase usa 'used to' corretamente para falar de um hábito da infância?",
+    options: ["I use to play outside every day.", "I used to play outside every day.", "I am used to play outside every day.", "I used play outside every day."],
+    correct: 1,
+    explanation: "A estrutura correta é 'subject + used to + verbo no infinitivo sem to' para hábitos passados: 'I used to play...'"
+  },
+  {
+    tag: "Aula 8 — Childhood memories (P2)",
+    prompt: "Qual é a forma negativa correta de 'used to'?",
+    options: ["I usedn't to like vegetables.", "I didn't used to like vegetables.", "I didn't use to like vegetables.", "I not used to like vegetables."],
+    correct: 2,
+    explanation: "Na negativa, usamos o auxiliar 'didn't' seguido de 'use to' (sem -d), já que 'did' já carrega a marca de passado."
+  },
+  {
+    tag: "Aula 9 — Childhood memories (P3)",
+    prompt: "Qual é a pergunta correta com 'used to'?",
+    options: ["Did you used to watch cartoons?", "Did you use to watch cartoons?", "Used you to watch cartoons?", "Do you used to watch cartoons?"],
+    correct: 1,
+    explanation: "Na interrogativa, usamos 'Did + subject + use to + verbo', sem o -d em 'use', pois 'did' já indica o passado."
+  },
+  {
+    tag: "Aula 11 — Reading and entertainment",
+    prompt: "Complete com o object pronoun correto: 'My friend gave ______ a present.'",
+    options: ["I", "me", "my", "mine"],
+    correct: 1,
+    explanation: "'Me' é o object pronoun correspondente a 'I' e deve ser usado depois de verbos, como em 'gave me'."
+  },
+  {
+    tag: "Aula 12 — Songs and entertainment",
+    prompt: "Complete: 'I ______ ______ at the party yesterday.' (see / he)",
+    options: ["see / he", "saw / him", "seen / he", "saw / he"],
+    correct: 1,
+    explanation: "'See' no simple past é 'saw', e o object pronoun de 'he' é 'him', usado depois do verbo."
+  },
+  {
+    tag: "Aula 13 — Short films and entertainment",
+    prompt: "Qual connector é usado para expressar uma causa/razão em uma narrativa?",
+    options: ["and", "but", "because", "then"],
+    correct: 2,
+    explanation: "'Because' introduz a causa ou razão de algo, diferente de 'and' (adição), 'but' (contraste) e 'then' (sequência)."
+  }
+];
+
+const flashData = [
+  { tag: "Aula 1 — Simple past", front: "Como se forma o simple past de verbos regulares?", back: "Verbo + -ed\nEx.: walk → walked, play → played" },
+  { tag: "Aula 1 — Ago", front: "Para que serve a palavra 'ago'?", back: "Indica quanto tempo se passou desde que algo aconteceu.\nEx.: two years ago (há dois anos)" },
+  { tag: "Aula 2 — Sequence words", front: "Cite as principais sequence words usadas para narrar eventos.", back: "First, then, after that, finally\n(indicam a ordem dos acontecimentos)" },
+  { tag: "Aula 3 — Can/Could", front: "Como se fala de uma habilidade no passado?", back: "Usa-se 'could'.\nEx.: I could swim when I was young." },
+  { tag: "Aula 5 — Comparando habilidades", front: "Como comparar uma habilidade do passado com o presente?", back: "When I was younger, I could draw, but now I can't." },
+  { tag: "Aula 6 — Used to (afirmativa)", front: "Como se forma 'used to' na afirmativa?", back: "Subject + used to + verbo (infinitivo sem to)\nEx.: I used to play with my doll." },
+  { tag: "Aula 8 — Used to (negativa)", front: "Como se forma a negativa de 'used to'?", back: "Subject + didn't + use to + verbo\nEx.: I didn't use to like vegetables." },
+  { tag: "Aula 9 — Used to (interrogativa)", front: "Como se forma a pergunta com 'used to'?", back: "Did + subject + use to + verbo?\nEx.: Did you use to watch cartoons?" },
+  { tag: "Aula 11 — Object pronouns", front: "O que são object pronouns? Dê um exemplo.", back: "Pronomes usados depois do verbo: me, you, him, her, it, us, them.\nEx.: She gave him a hug." },
+  { tag: "Aula 13 — Connectors", front: "Cite conectores comuns e o que eles indicam.", back: "and (adição), but (contraste), because (causa), then/so (sequência ou consequência)" }
+];
+
+/* ---------------- TABS ---------------- */
+function showTab(name){
+  document.getElementById('quiz').classList.toggle('active', name==='quiz');
+  document.getElementById('flash').classList.toggle('active', name==='flash');
+  document.getElementById('tab-quiz').classList.toggle('active', name==='quiz');
+  document.getElementById('tab-flash').classList.toggle('active', name==='flash');
+}
+
+/* ---------------- QUIZ LOGIC ---------------- */
+const userAnswers = new Array(quizData.length).fill(null);
+let corrected = false;
+
+function renderQuiz(){
+  const container = document.getElementById('quiz-container');
+  container.innerHTML = '';
+  quizData.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.id = 'q-card-' + qi;
+
+    const tag = document.createElement('div');
+    tag.className = 'question-tag';
+    tag.textContent = q.tag;
+    card.appendChild(tag);
+
+    const prompt = document.createElement('p');
+    prompt.className = 'question-text';
+    prompt.textContent = (qi+1) + '. ' + q.prompt;
+    card.appendChild(prompt);
+
+    const opts = document.createElement('div');
+    opts.className = 'options';
+    q.options.forEach((optText, oi) => {
+      const label = document.createElement('label');
+      label.className = 'option';
+      label.id = 'opt-' + qi + '-' + oi;
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'q' + qi;
+      input.value = oi;
+      input.onchange = () => { userAnswers[qi] = oi; clearError(qi); };
+      label.appendChild(input);
+      const span = document.createElement('span');
+      span.textContent = optText;
+      label.appendChild(span);
+      opts.appendChild(label);
+    });
+    card.appendChild(opts);
+
+    const err = document.createElement('div');
+    err.className = 'error-msg';
+    err.id = 'err-' + qi;
+    err.textContent = 'Selecione uma alternativa antes de corrigir.';
+    card.appendChild(err);
+
+    const exp = document.createElement('div');
+    exp.className = 'explanation';
+    exp.id = 'exp-' + qi;
+    exp.textContent = q.explanation;
+    card.appendChild(exp);
+
+    container.appendChild(card);
+  });
+}
+
+function clearError(qi){
+  const err = document.getElementById('err-' + qi);
+  if(err) err.classList.remove('show');
+}
+
+function checkQuiz(){
+  let missing = false;
+  quizData.forEach((q, qi) => {
+    if(userAnswers[qi] === null){
+      document.getElementById('err-' + qi).classList.add('show');
+      missing = true;
+    } else {
+      clearError(qi);
+    }
+  });
+  if(missing) return;
+
+  let score = 0;
+  quizData.forEach((q, qi) => {
+    const chosen = userAnswers[qi];
+    q.options.forEach((optText, oi) => {
+      const label = document.getElementById('opt-' + qi + '-' + oi);
+      label.classList.remove('correct','wrong');
+      if(oi === q.correct){
+        label.classList.add('correct');
+      } else if(oi === chosen){
+        label.classList.add('wrong');
+      }
+    });
+    if(chosen === q.correct) score++;
+    document.getElementById('exp-' + qi).classList.add('show');
+  });
+
+  const box = document.getElementById('score-box');
+  box.textContent = 'Você acertou ' + score + ' de ' + quizData.length + ' questões!';
+  box.classList.add('show');
+  box.scrollIntoView({behavior:'smooth', block:'start'});
+  corrected = true;
+}
+
+function resetQuiz(){
+  userAnswers.fill(null);
+  corrected = false;
+  document.getElementById('score-box').classList.remove('show');
+  renderQuiz();
+}
+
+/* ---------------- FLASHCARDS LOGIC ---------------- */
+let flashIndex = 0;
+let flashOrder = flashData.map((_, i) => i);
+
+function renderFlashcard(){
+  const idx = flashOrder[flashIndex];
+  const item = flashData[idx];
+  document.getElementById('front-tag').textContent = item.tag;
+  document.getElementById('front-content').textContent = item.front;
+  document.getElementById('back-tag').textContent = 'Resposta';
+  document.getElementById('back-content').innerHTML = item.back.replace(/\n/g, '<br>');
+  document.getElementById('flashcard').classList.remove('flipped');
+  document.getElementById('flash-counter').textContent = 'Card ' + (flashIndex+1) + ' de ' + flashData.length;
+}
+
+function flipCard(){
+  document.getElementById('flashcard').classList.toggle('flipped');
+}
+
+function nextCard(){
+  flashIndex = (flashIndex + 1) % flashData.length;
+  renderFlashcard();
+}
+
+function prevCard(){
+  flashIndex = (flashIndex - 1 + flashData.length) % flashData.length;
+  renderFlashcard();
+}
+
+function shuffleCards(){
+  for(let i = flashOrder.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i+1));
+    [flashOrder[i], flashOrder[j]] = [flashOrder[j], flashOrder[i]];
+  }
+  flashIndex = 0;
+  renderFlashcard();
+}
+
+/* ---------------- INIT ---------------- */
+renderQuiz();
+renderFlashcard();
+</script>
+
+</body>
+</html>
